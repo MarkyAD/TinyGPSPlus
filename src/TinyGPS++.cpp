@@ -171,19 +171,19 @@ bool TinyGPSPlus::endOfTermHandler()
       switch(curSentenceType)
       {
       case GPS_SENTENCE_GPRMC:
-        date.commit();
-        time.commit();
         if (sentenceHasFix)
         {
+           date.commit();
+           time.commit();
            location.commit();
            speed.commit();
            course.commit();
         }
         break;
       case GPS_SENTENCE_GPGGA:
-        time.commit();
         if (sentenceHasFix)
         {
+          time.commit();
           location.commit();
           altitude.commit();
         }
