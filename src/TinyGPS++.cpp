@@ -79,6 +79,7 @@ bool TinyGPSPlus::encode(char c)
     break;
 
   case '$': // sentence begin
+    sentenceTime = millis();
     curTermNumber = curTermOffset = 0;
     parity = 0;
     curSentenceType = GPS_SENTENCE_OTHER;
@@ -173,28 +174,28 @@ bool TinyGPSPlus::endOfTermHandler()
       case GPS_SENTENCE_GPRMC:
         if (sentenceHasFix)
         {
-           date.commit();
-           time.commit();
-           location.commit();
-           speed.commit();
-           course.commit();
+           date.commit(sentenceTime);
+           time.commit(sentenceTime);
+           location.commit(sentenceTime);
+           speed.commit(sentenceTime);
+           course.commit(sentenceTime);
         }
         break;
       case GPS_SENTENCE_GPGGA:
         if (sentenceHasFix)
         {
-          time.commit();
-          location.commit();
-          altitude.commit();
+          time.commit(sentenceTime);
+          location.commit(sentenceTime);
+          altitude.commit(sentenceTime);
         }
-        satellites.commit();
-        hdop.commit();
+        satellites.commit(sentenceTime);
+        hdop.commit(sentenceTime);
         break;
       }
 
       // Commit all custom listeners of this sentence type
       for (TinyGPSCustom *p = customCandidates; p != NULL && strcmp(p->sentenceName, customCandidates->sentenceName) == 0; p = p->next)
-         p->commit();
+         p->commit(sentenceTime);
       return true;
     }
 
@@ -334,11 +335,11 @@ const char *TinyGPSPlus::cardinal(double course)
   return directions[direction % 16];
 }
 
-void TinyGPSLocation::commit()
+void TinyGPSLocation::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    rawLatData = rawNewLatData;
    rawLngData = rawNewLngData;
-   lastCommitTime = millis();
    valid = updated = true;
 }
 
@@ -366,17 +367,17 @@ double TinyGPSLocation::lng()
    return rawLngData.negative ? -ret : ret;
 }
 
-void TinyGPSDate::commit()
+void TinyGPSDate::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    date = newDate;
-   lastCommitTime = millis();
    valid = updated = true;
 }
 
-void TinyGPSTime::commit()
+void TinyGPSTime::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    time = newTime;
-   lastCommitTime = millis();
    valid = updated = true;
 }
 
@@ -433,10 +434,10 @@ uint8_t TinyGPSTime::centisecond()
    return time % 100;
 }
 
-void TinyGPSDecimal::commit()
+void TinyGPSDecimal::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    val = newval;
-   lastCommitTime = millis();
    valid = updated = true;
 }
 
@@ -445,10 +446,10 @@ void TinyGPSDecimal::set(const char *term)
    newval = TinyGPSPlus::parseDecimal(term);
 }
 
-void TinyGPSInteger::commit()
+void TinyGPSInteger::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    val = newval;
-   lastCommitTime = millis();
    valid = updated = true;
 }
 
@@ -464,7 +465,7 @@ TinyGPSCustom::TinyGPSCustom(TinyGPSPlus &gps, const char *_sentenceName, int _t
 
 void TinyGPSCustom::begin(TinyGPSPlus &gps, const char *_sentenceName, int _termNumber)
 {
-   lastCommitTime = 0;
+   createTime = millis();
    updated = valid = false;
    sentenceName = _sentenceName;
    termNumber = _termNumber;
@@ -475,10 +476,10 @@ void TinyGPSCustom::begin(TinyGPSPlus &gps, const char *_sentenceName, int _term
    gps.insertCustom(this, _sentenceName, _termNumber);
 }
 
-void TinyGPSCustom::commit()
+void TinyGPSCustom::commit(uint32_t timestamp)
 {
+   createTime = timestamp;
    strcpy(this->buffer, this->stagingBuffer);
-   lastCommitTime = millis();
    valid = updated = true;
 }
 

@@ -56,7 +56,7 @@ struct TinyGPSLocation
 public:
    bool isValid() const    { return valid; }
    bool isUpdated() const  { return updated; }
-   uint32_t age() const    { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const    { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
    const RawDegrees &rawLat()     { updated = false; return rawLatData; }
    const RawDegrees &rawLng()     { updated = false; return rawLngData; }
    double lat();
@@ -68,8 +68,8 @@ public:
 private:
    bool valid, updated;
    RawDegrees rawLatData, rawLngData, rawNewLatData, rawNewLngData;
-   uint32_t lastCommitTime;
-   void commit();
+   uint32_t createTime;
+   void commit(uint32_t timestamp);
    void setLatitude(const char *term);
    void setLongitude(const char *term);
 };
@@ -80,7 +80,7 @@ struct TinyGPSDate
 public:
    bool isValid() const       { return valid; }
    bool isUpdated() const     { return updated; }
-   uint32_t age() const       { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const       { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
 
    uint32_t value()           { updated = false; return date; }
    uint16_t year();
@@ -93,8 +93,8 @@ public:
 private:
    bool valid, updated;
    uint32_t date, newDate;
-   uint32_t lastCommitTime;
-   void commit();
+   uint32_t createTime;
+   void commit(uint32_t timestamp);
    void setDate(const char *term);
 };
 
@@ -104,7 +104,7 @@ struct TinyGPSTime
 public:
    bool isValid() const       { return valid; }
    bool isUpdated() const     { return updated; }
-   uint32_t age() const       { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const       { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
 
    uint32_t value()           { updated = false; return time; }
    uint8_t hour();
@@ -118,8 +118,8 @@ public:
 private:
    bool valid, updated;
    uint32_t time, newTime;
-   uint32_t lastCommitTime;
-   void commit();
+   uint32_t createTime;
+   void commit(uint32_t timestamp);
    void setTime(const char *term);
 };
 
@@ -129,7 +129,7 @@ struct TinyGPSDecimal
 public:
    bool isValid() const    { return valid; }
    bool isUpdated() const  { return updated; }
-   uint32_t age() const    { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const    { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
    int32_t value()         { updated = false; return val; }
 
    TinyGPSDecimal() : valid(false), updated(false), val(0)
@@ -137,9 +137,9 @@ public:
 
 private:
    bool valid, updated;
-   uint32_t lastCommitTime;
+   uint32_t createTime;
    int32_t val, newval;
-   void commit();
+   void commit(uint32_t timestamp);
    void set(const char *term);
 };
 
@@ -149,7 +149,7 @@ struct TinyGPSInteger
 public:
    bool isValid() const    { return valid; }
    bool isUpdated() const  { return updated; }
-   uint32_t age() const    { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const    { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
    uint32_t value()        { updated = false; return val; }
 
    TinyGPSInteger() : valid(false), updated(false), val(0)
@@ -157,9 +157,9 @@ public:
 
 private:
    bool valid, updated;
-   uint32_t lastCommitTime;
+   uint32_t createTime;
    uint32_t val, newval;
-   void commit();
+   void commit(uint32_t timestamp);
    void set(const char *term);
 };
 
@@ -199,16 +199,16 @@ public:
 
    bool isUpdated() const  { return updated; }
    bool isValid() const    { return valid; }
-   uint32_t age() const    { return valid ? millis() - lastCommitTime : (uint32_t)ULONG_MAX; }
+   uint32_t age() const    { return valid ? millis() - createTime : (uint32_t)ULONG_MAX; }
    const char *value()     { updated = false; return buffer; }
 
 private:
-   void commit();
+   void commit(uint32_t timestamp);
    void set(const char *term);
 
    char stagingBuffer[_GPS_MAX_FIELD_SIZE + 1];
    char buffer[_GPS_MAX_FIELD_SIZE + 1];
-   unsigned long lastCommitTime;
+   uint32_t createTime;
    bool valid, updated;
    const char *sentenceName;
    int termNumber;
@@ -256,6 +256,7 @@ private:
   uint8_t curSentenceType;
   uint8_t curTermNumber;
   uint8_t curTermOffset;
+  uint32_t sentenceTime;
   bool sentenceHasFix;
 
   // custom element support
