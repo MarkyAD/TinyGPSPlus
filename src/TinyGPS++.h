@@ -31,6 +31,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #include <limits.h>
 
+/********************----- Options -----********************/
+//#define TINYGPSPLUS_OPTION_NO_CUSTOM_FIELDS
+//#define TINYGPSPLUS_OPTION_NO_STATISTICS
+/**************************************************/
+
+
 #define _GPS_VERSION "1.0.2" // software version of this library
 #define _GPS_MPH_PER_KNOT 1.15077945
 #define _GPS_MPS_PER_KNOT 0.51444444
@@ -189,6 +195,7 @@ struct TinyGPSHDOP : TinyGPSDecimal
    double hdop() { return value() / 100.0; }
 };
 
+#ifndef TINYGPS_OPTION_NO_CUSTOM_FIELDS
 class TinyGPSPlus;
 class TinyGPSCustom
 {
@@ -215,6 +222,7 @@ private:
    friend class TinyGPSPlus;
    TinyGPSCustom *next;
 };
+#endif
 
 class TinyGPSPlus
 {
@@ -241,10 +249,12 @@ public:
   static int32_t parseDecimal(const char *term);
   static void parseDegrees(const char *term, RawDegrees &deg);
 
+#ifndef TINYGPS_OPTION_NO_STATISTICS
   uint32_t charsProcessed()   const { return encodedCharCount; }
   uint32_t sentencesWithFix() const { return sentencesWithFixCount; }
   uint32_t failedChecksum()   const { return failedChecksumCount; }
   uint32_t passedChecksum()   const { return passedChecksumCount; }
+#endif
 
 private:
   enum {GPS_SENTENCE_GPGGA, GPS_SENTENCE_GPRMC, GPS_SENTENCE_OTHER};
@@ -259,17 +269,21 @@ private:
   uint32_t sentenceTime;
   bool sentenceHasFix;
 
+#ifndef TINYGPS_OPTION_NO_CUSTOM_FIELDS
   // custom element support
   friend class TinyGPSCustom;
   TinyGPSCustom *customElts;
   TinyGPSCustom *customCandidates;
   void insertCustom(TinyGPSCustom *pElt, const char *sentenceName, int index);
+#endif
 
+#ifndef TINYGPS_OPTION_NO_STATISTICS
   // statistics
   uint32_t encodedCharCount;
   uint32_t sentencesWithFixCount;
   uint32_t failedChecksumCount;
   uint32_t passedChecksumCount;
+#endif
 
   // internal utilities
   int fromHex(char a);
